@@ -3,8 +3,16 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/local/depend/vendor/autoload.php';
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 
+// Функция для отправки JSON-ответа
+function sendJsonResponse($success, $message, $httpCode = 200) {
+    http_response_code($httpCode);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => $success, 'message' => $message], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $settings = include($_SERVER['DOCUMENT_ROOT'].'/bitrix/php_interface/include/.settings.php');
+    $settings = include($_SERVER['DOCUMENT_ROOT'].'/bitrix/.settings.php');
 
     $captchaSecretKey = $settings['api_keys']['recaptcha_secret_key'];
     $telegramBotToken = $settings['api_keys']['telegram_bot_token'];
@@ -12,13 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $smtp_password = $settings['api_keys']['smtp_password'];
 
     // Проверка капчи
-    $captchaResponse = $_POST['g-recaptcha-response'];
+    $captchaResponse = $_POST['g-recaptcha-response'] ?? '';
+
+    if (empty($captchaResponse)) {
+        sendJsonResponse(false, 'Пожалуйста, пройдите проверку reCAPTCHA.', 400);
+    }
+
     $verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
     $response = file_get_contents($verifyUrl . '?secret=' . $captchaSecretKey . '&response=' . $captchaResponse);
     $responseKeys = json_decode($response, true);
 
     if (intval($responseKeys["success"]) !== 1) {
-        exit('Капча не пройдена.');
+        sendJsonResponse(false, 'Капча не пройдена. Попробуйте еще раз.', 400);
     }
 
     // Обработка данных формы
@@ -30,6 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Проверка и отправка резюме
     if ($resume['error'] === UPLOAD_ERR_OK) {
         $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/upload/resumes/';
+
+        // Создаем директорию если её нет
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
         $uploadFile = $uploadDir . basename($resume['name']);
 
         // Получаем MIME-тип файла
@@ -38,13 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Проверка MIME-типов
         $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
         if (!in_array($fileType, $allowedTypes)) {
-            exit("Неверный тип файла. Разрешены только PDF, DOC, DOCX и TXT.");
+            sendJsonResponse(false, "Неверный тип файла. Разрешены только PDF, DOC, DOCX и TXT.", 400);
         }
 
         // Перемещаем загруженный файл в директорию
         if (!move_uploaded_file($resume['tmp_name'], $uploadFile)) {
-            exit("Ошибка при загрузке файла: " . $resume['error']);
+            sendJsonResponse(false, "Ошибка при загрузке файла: " . $resume['error'], 500);
         }
+    } else {
+        sendJsonResponse(false, "Ошибка загрузки файла.", 400);
     }
 
     // Настройка PHPMailer
@@ -56,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mail->Password = $smtp_password;
     $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
+    $mail->CharSet = 'UTF-8';
 
     // Отправитель и получатель
     $mail->setFrom('g.mizin@dapsite.ru', 'Отправитель почты');
@@ -68,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Отправка письма
     if (!$mail->send()) {
-        exit('Сообщение не может быть отправлено. Почтовая ошибка: ' . $mail->ErrorInfo);
+        sendJsonResponse(false, 'Сообщение не может быть отправлено. Почтовая ошибка: ' . $mail->ErrorInfo, 500);
     }
 
     // Отправка резюме в Telegram
@@ -89,6 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $res = curl_exec($ch);
     curl_close($ch);
 
-    exit('Заявка отправлена в Telegram.');
+    sendJsonResponse(true, 'Заявка успешно отправлена!', 200);
 }
 ?>
