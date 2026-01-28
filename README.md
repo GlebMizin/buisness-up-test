@@ -59,7 +59,7 @@ GET /task2/budget_api.php?action=transactions
 ## Установка
 
 1. Скопировать файлы в корень сайта
-2. Настроить API ключи в `/bitrix/php_interface/include/.settings.php`
+2. Настроить API ключи в `/bitrix/.settings.php`
 3. Создать таблицу БД для задания 2:
 ```sql
 CREATE TABLE b_budget_transactions (
