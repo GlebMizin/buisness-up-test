@@ -1,6 +1,6 @@
 <?
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
-$APPLICATION->SetTitle('Главная');
+$APPLICATION->SetTitle('ФОС');
 ?>
     <form action="/local/tools/submit.php" method="post" enctype="multipart/form-data">
         <div class="inputs">

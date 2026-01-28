@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $captchaSecretKey = $settings['api_keys']['recaptcha_secret_key'];
     $telegramBotToken = $settings['api_keys']['telegram_bot_token'];
     $telegramChatId = $settings['api_keys']['telegram_chat_id'];
+    $smtp_password = $settings['api_keys']['smtp_password'];
 
     // Проверка капчи
     $captchaResponse = $_POST['g-recaptcha-response'];
@@ -52,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mail->Host = 'smtp.yandex.ru';
     $mail->SMTPAuth = true;
     $mail->Username = 'g.mizin@dapsite.ru';
-    $mail->Password = 'fzrivxsmztimlplm';
+    $mail->Password = $smtp_password;
     $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
 
