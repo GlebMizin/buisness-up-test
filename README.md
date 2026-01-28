@@ -59,7 +59,17 @@ GET /task2/budget_api.php?action=transactions
 ## Установка
 
 1. Скопировать файлы в корень сайта
-2. Настроить API ключи в `/bitrix/.settings.php`
+2. Настроить API ключи и доступы в `/bitrix/.settings.php`
+пример `'api_keys' =>
+   array (
+   'recaptcha_secret_key' => 'ключ капчи',
+   'telegram_bot_token' => 'токен бота',
+   'telegram_chat_id' => 'айди чата ТГ',
+   'smtp_host' => 'сервер смтп',
+   'smtp_port' => порт (число),
+   'smtp_user' => 'email отправителя и получателя (одно лицо в контексте задания)',
+   'smtp_password' => 'пароль смтп',
+   ),`
 3. Создать таблицу БД для задания 2:
 ```sql
 CREATE TABLE b_budget_transactions (
