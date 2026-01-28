@@ -18,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telegramBotToken = $settings['api_keys']['telegram_bot_token'];
     $telegramChatId = $settings['api_keys']['telegram_chat_id'];
     $smtp_password = $settings['api_keys']['smtp_password'];
+    $smtp_host = $settings['api_keys']['smtp_host'];
+    $smtp_port = $settings['api_keys']['smtp_port'];
+    $smtp_user = $settings['api_keys']['smtp_user'];
 
     // Проверка капчи
     $captchaResponse = $_POST['g-recaptcha-response'] ?? '';
@@ -71,17 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Настройка PHPMailer
     $mail = new PHPMailer\PHPMailer\PHPMailer();
     $mail->isSMTP();
-    $mail->Host = 'smtp.yandex.ru';
+    $mail->Host = $smtp_host;
     $mail->SMTPAuth = true;
-    $mail->Username = 'g.mizin@dapsite.ru';
+    $mail->Username = $smtp_user;
     $mail->Password = $smtp_password;
     $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port = 587;
+    $mail->Port = $smtp_port;
     $mail->CharSet = 'UTF-8';
 
     // Отправитель и получатель
-    $mail->setFrom('g.mizin@dapsite.ru', 'Отправитель почты');
-    $mail->addAddress('g.mizin@dapsite.ru');
+    $mail->setFrom($smtp_user, 'Отправитель почты');
+    $mail->addAddress($smtp_user);
     $mail->Subject = 'Новая заявка с формы';
     $mail->Body    = "Имя: $name\nПочта: $email\nТелефон: $phone\nРезюме: " . basename($uploadFile);
 
